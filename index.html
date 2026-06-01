@@ -1,0 +1,913 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Свияга · Закупки</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Montserrat,-apple-system,Segoe UI,Roboto,sans-serif;background:#FFF8F0;color:#1A1A1A}
+header{background:#1A1A1A;color:#fff;padding:18px 24px}
+header h1{margin:0;font-size:20px;font-weight:800}
+header h1 span{color:#FF4D14}
+.sub{opacity:.7;font-size:13px;margin-top:4px}
+.chips{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:12px;padding:3px 9px;border-radius:20px}
+.chip.fresh{background:#1f3d2b;color:#9be3b8}
+.chip.stale{background:#4a1f22;color:#ff9aa0}
+.wrap{padding:20px 24px;max-width:1500px;margin:0 auto}
+.counters{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.card{flex:1;min-width:200px;background:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.card .n{font-size:30px;font-weight:800}
+.card .l{font-size:13px;opacity:.7}
+.card.order{border-left:4px solid #FF4D14}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tab{padding:9px 16px;border-radius:10px;border:none;background:#fff;cursor:pointer;font-weight:700;font-size:14px;color:#1A1A1A}
+.tab.active{background:#FF4D14;color:#fff}
+.toolbar{margin:0 0 10px;display:flex;gap:10px;flex-wrap:wrap}
+.toolbar input,.toolbar select{padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:13px}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid #f0eadf}
+th{background:#faf4ea;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+td.art{font-weight:700;white-space:nowrap}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
+.rec b{color:#FF4D14}
+.flag{font-size:10px;background:#fbe7d8;color:#a05a00;padding:1px 6px;border-radius:6px;margin-left:4px}
+.caret{display:inline-block;width:12px;color:#FF4D14;font-size:11px}
+tr.main{cursor:pointer}
+tr.main:hover{background:#fff7ef}
+.det td{background:#fbf6ee;padding:14px 16px}
+.detwrap{display:flex;gap:28px;flex-wrap:wrap}
+.detcol{flex:1;min-width:280px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px dashed #eadfce}
+.kv .k{opacity:.65} .kv .v{font-weight:600;text-align:right}
+.subt{font-weight:700;margin:16px 0 6px}
+table.sub{font-size:12px} table.sub th{background:#f3ead9}
+.muted{opacity:.6}
+.totline{margin:12px 0;font-size:15px}
+.piperow{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.pipehead{font-weight:700;margin-bottom:8px}
+.pipe{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.stagebox{display:flex;flex-direction:column;align-items:center;min-width:84px;padding:8px 10px;border-radius:10px;background:#f7f0e4}
+.stagebox b{font-size:16px} .stagebox .sl{font-size:11px;opacity:.7}
+.stagebox.bad{background:#fbe0e1;outline:2px solid #E5484D}
+.arrow{color:#bbb;font-size:18px}
+.pipenote{margin-top:8px;font-size:12px;color:#a01b1f;background:#fdeceb;padding:6px 10px;border-radius:8px}
+.empty{opacity:.6;padding:20px;text-align:center}
+.exgroup{margin-top:14px;background:#fff;border-radius:12px;padding:6px 14px}
+.exgroup summary{cursor:pointer;font-weight:700;padding:8px 0}
+.exgroup.broken summary{color:#a05a00}
+.section{display:none} .section.active{display:block}
+footer{opacity:.6;font-size:12px;padding:16px 24px}
+</style></head><body>
+<header>
+  <h1>AI Свияга · <span>Закупки</span></h1>
+  <div class="sub">Остатки и два горизонта закупки · WB + Ozon · 265 SKU</div>
+  <div class="chips"><span class="chip fresh">WB: 01.06</span><span class="chip fresh">Ozon: 01.06</span><span class="chip fresh">Локализация: ок</span><span class="chip fresh">Себестоимость: ок</span></div>
+</header>
+<div class="wrap">
+  <div class="counters">
+    <div class="card"><div class="n">18</div><div class="l">отгрузить со склада на МП</div></div>
+    <div class="card order"><div class="n">56</div><div class="l">заказать в Китае · ~534 185 ₽</div></div>
+    <div class="card"><div class="n">64</div><div class="l">затоварка (деньги заморожены)</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab(0,this)">Отгрузить на МП (18)</button>
+    <button class="tab" onclick="showTab(1,this)">Заказать в Китае (56)</button>
+    
+  </div>
+  <div class="toolbar">
+    <input id="q" placeholder="Поиск по артикулу…" oninput="filt()">
+    <select id="mp" onchange="filt()"><option value="">Все площадки</option><option>WB</option><option>Ozon</option></select>
+  </div>
+  <div class="section active" id="sec0"><table><thead><tr><th>Артикул</th><th>Категория</th><th>Статус</th><th>Остаток МП</th><th>Остаток ФФ</th><th>Едет</th><th>Скор/д</th><th>Покрытие МП/общ</th><th>ИЛ</th><th>Рекомендация</th><th>Сумма ₽</th></tr></thead><tbody><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="skyline0,20">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>SKYLINE0,20 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="—">0</td>
+<td title="КЗН: 260">260</td>
+<td>265</td>
+<td>17,3</td>
+<td>0 / 30.3</td>
+<td>68%</td>
+<td class="rec">отгрузить <b>260</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 260</span></div><div class="kv"><span class="k">Едет</span><span class="v">265</span></div><div class="kv"><span class="k">Скорость</span><span class="v">17,3 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0 дн · общее 30.3 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 260 · заказать в Китае 496</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="Ozon" data-article="kaida.hooligan2,4м,тест5-20грамм">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#3E7BFA"></span>KAIDA.HOOLIGAN2,4м,тест5-20грамм <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="—">0</td>
+<td title="КЗН: 2 · МСК-1: 29">31</td>
+<td>2</td>
+<td>0,1</td>
+<td>0 / 330</td>
+<td>—</td>
+<td class="rec">отгрузить <b>3</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 2 · МСК-1: 29</span></div><div class="kv"><span class="k">Едет</span><span class="v">2</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,1 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0 дн · общее 330 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">1 063 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 3</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="Ozon" data-article="kaida.hooligan2,7метра,тест5-20грамм">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>KAIDA.HOOLIGAN2,7метра,тест5-20грамм <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="—">0</td>
+<td title="КЗН: 1 · ВЛД: 11">12</td>
+<td>15</td>
+<td>0,5</td>
+<td>0 / 54</td>
+<td>—</td>
+<td class="rec">отгрузить <b>12</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 1 · ВЛД: 11</span></div><div class="kv"><span class="k">Едет</span><span class="v">15</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,5 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0 дн · общее 54 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">1 113 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 12 · заказать в Китае 3</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">3 340 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="Ozon" data-article="2500fc">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>2500FC <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="—">0</td>
+<td title="ВЛД: 6">6</td>
+<td>0</td>
+<td>0,6</td>
+<td>0 / 10</td>
+<td>—</td>
+<td class="rec">отгрузить <b>6</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: 6</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,6 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0 дн · общее 10 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 6 · заказать в Китае 30</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x4 0.18">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>X4 0.18 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 15">15</td>
+<td title="ВЛД: 156">156</td>
+<td>160</td>
+<td>23,7</td>
+<td>0.6 / 14</td>
+<td>64%</td>
+<td class="rec">отгрузить <b>156</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 15 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: 156</span></div><div class="kv"><span class="k">Едет</span><span class="v">160</span></div><div class="kv"><span class="k">Скорость</span><span class="v">23,7 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0.6 дн · общее 14 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 156 · заказать в Китае 1 068</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x8power(цветная)0,22">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>X8POWER(цветная)0,22 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 7 · Ozon: 1">8</td>
+<td title="КЗН: 308">308</td>
+<td>125</td>
+<td>13,2</td>
+<td>0.6 / 33.4</td>
+<td>65%</td>
+<td class="rec">отгрузить <b>308</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 7 · Ozon: 1</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 308</span></div><div class="kv"><span class="k">Едет</span><span class="v">125</span></div><div class="kv"><span class="k">Скорость</span><span class="v">13,2 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0.6 дн · общее 33.4 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 308 · заказать в Китае 338</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="kaida.hooligan2,1м,тест10-30">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#30A46C"></span>KAIDA.HOOLIGAN2,1м,тест10-30 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 1">1</td>
+<td title="МСК-1: 30">30</td>
+<td>0</td>
+<td>0,5</td>
+<td>2 / 62</td>
+<td>—</td>
+<td class="rec">отгрузить <b>13</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 1</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">МСК-1: 30</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,5 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 2 дн · общее 62 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">962 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 13</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="skyline0,16">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>SKYLINE0,16 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 45">45</td>
+<td title="КЗН: 385">385</td>
+<td>195</td>
+<td>19,6</td>
+<td>2.3 / 31.9</td>
+<td>61%</td>
+<td class="rec">отгрузить <b>385</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 45 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 385</span></div><div class="kv"><span class="k">Едет</span><span class="v">195</span></div><div class="kv"><span class="k">Скорость</span><span class="v">19,6 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 2.3 дн · общее 31.9 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 385 · заказать в Китае 532</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="carp 0.28">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>CARP 0.28 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 72">72</td>
+<td title="ВЛД: 125">125</td>
+<td>235</td>
+<td>17,8</td>
+<td>4 / 24.3</td>
+<td>59%</td>
+<td class="rec">отгрузить <b>125</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 72 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: 125</span></div><div class="kv"><span class="k">Едет</span><span class="v">235</span></div><div class="kv"><span class="k">Скорость</span><span class="v">17,8 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 4 дн · общее 24.3 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 125 · заказать в Китае 619</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="kaida.hooligan2,1м,тест5-20грамм">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>KAIDA.HOOLIGAN2,1м,тест5-20грамм <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 7">7</td>
+<td title="МСК-1: 14">14</td>
+<td>2</td>
+<td>1,4</td>
+<td>5 / 16.4</td>
+<td>50%</td>
+<td class="rec">отгрузить <b>14</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 7</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">МСК-1: 14</span></div><div class="kv"><span class="k">Едет</span><span class="v">2</span></div><div class="kv"><span class="k">Скорость</span><span class="v">1,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 5 дн · общее 16.4 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">962 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 14 · заказать в Китае 60</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">57 694 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="skyline0,22">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>SKYLINE0,22 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 124">124</td>
+<td title="КЗН: 280">280</td>
+<td>265</td>
+<td>24,4</td>
+<td>5.1 / 27.4</td>
+<td>61%</td>
+<td class="rec">отгрузить <b>280</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 124 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 280</span></div><div class="kv"><span class="k">Едет</span><span class="v">265</span></div><div class="kv"><span class="k">Скорость</span><span class="v">24,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 5.1 дн · общее 27.4 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 280 · заказать в Китае 771</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x4 0.16">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>X4 0.16 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 92 · Ozon: 1">93</td>
+<td title="ВЛД: 311">311</td>
+<td>195</td>
+<td>17,5</td>
+<td>5.3 / 34.2</td>
+<td>59%</td>
+<td class="rec">отгрузить <b>311</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 92 · Ozon: 1</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: 311</span></div><div class="kv"><span class="k">Едет</span><span class="v">195</span></div><div class="kv"><span class="k">Скорость</span><span class="v">17,5 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 5.3 дн · общее 34.2 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 311 · заказать в Китае 434</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="skyline0,30">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>SKYLINE0,30 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 68 · Ozon: 5">73</td>
+<td title="КЗН: 295">295</td>
+<td>150</td>
+<td>9,4</td>
+<td>7.8 / 55.1</td>
+<td>59%</td>
+<td class="rec">отгрузить <b>191</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 68 · Ozon: 5</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 295</span></div><div class="kv"><span class="k">Едет</span><span class="v">150</span></div><div class="kv"><span class="k">Скорость</span><span class="v">9,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 7.8 дн · общее 55.1 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 191 · заказать в Китае 37</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x8power(цветная)0,20">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#30A46C"></span>X8POWER(цветная)0,20 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 78 · Ozon: 4">82</td>
+<td title="КЗН: 330">330</td>
+<td>125</td>
+<td>8,7</td>
+<td>9.4 / 61.7</td>
+<td>64%</td>
+<td class="rec">отгрузить <b>162</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 78 · Ozon: 4</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 330</span></div><div class="kv"><span class="k">Едет</span><span class="v">125</span></div><div class="kv"><span class="k">Скорость</span><span class="v">8,7 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 9.4 дн · общее 61.7 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 162</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="kaidafalcons330">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#30A46C"></span>KAIDAFALCONS330 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 1">1</td>
+<td title="МСК-1: 10">10</td>
+<td>0</td>
+<td>0,1</td>
+<td>10 / 110</td>
+<td>—</td>
+<td class="rec">отгрузить <b>2</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 1 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">МСК-1: 10</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,1 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 10 дн · общее 110 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">962 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 2</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x8power(цветная)0,18">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#30A46C"></span>X8POWER(цветная)0,18 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 48">48</td>
+<td title="КЗН: 320">320</td>
+<td>125</td>
+<td>4,7</td>
+<td>10.2 / 104.9</td>
+<td>59%</td>
+<td class="rec">отгрузить <b>84</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 48 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 320</span></div><div class="kv"><span class="k">Едет</span><span class="v">125</span></div><div class="kv"><span class="k">Скорость</span><span class="v">4,7 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 10.2 дн · общее 104.9 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 84</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x8power(цветная)0,25">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#30A46C"></span>X8POWER(цветная)0,25 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 58 · Ozon: 9">67</td>
+<td title="КЗН: 343">343</td>
+<td>145</td>
+<td>5,0</td>
+<td>13.4 / 111</td>
+<td>68%</td>
+<td class="rec">отгрузить <b>73</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 58 · Ozon: 9</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 343</span></div><div class="kv"><span class="k">Едет</span><span class="v">145</span></div><div class="kv"><span class="k">Скорость</span><span class="v">5,0 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 13.4 дн · общее 111 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 73</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x8power(цветная)0,28">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#30A46C"></span>X8POWER(цветная)0,28 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 67">67</td>
+<td title="КЗН: 244">244</td>
+<td>125</td>
+<td>4,9</td>
+<td>13.7 / 89</td>
+<td>64%</td>
+<td class="rec">отгрузить <b>71</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 67 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 244</span></div><div class="kv"><span class="k">Едет</span><span class="v">125</span></div><div class="kv"><span class="k">Скорость</span><span class="v">4,9 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 13.7 дн · общее 89 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 71</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr></tbody></table></div>
+  <div class="section" id="sec1"><table><thead><tr><th>Артикул</th><th>Категория</th><th>Статус</th><th>Остаток МП</th><th>Остаток ФФ</th><th>Едет</th><th>Скор/д</th><th>Покрытие МП/общ</th><th>ИЛ</th><th>Рекомендация</th><th>Сумма ₽</th></tr></thead><tbody><tr class="main" onclick="td(this)" data-mp="WB" data-article="катушка shimano 21 nexave c2000 s">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>Катушка Shimano 21 Nexave C2000 S <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="—">0</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,4</td>
+<td>0 / 0</td>
+<td>—</td>
+<td class="rec">заказать <b>24</b></td>
+<td>61 689 ₽</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0 дн · общее 0 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">2 570 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 24</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">61 689 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x4 0.20">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>X4 0.20 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="—">0</td>
+<td title="—">0</td>
+<td>0</td>
+<td>3,4</td>
+<td>0 / 0</td>
+<td>74%</td>
+<td class="rec">заказать <b>201</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">3,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0 дн · общее 0 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 201</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x4 0.26">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>X4 0.26 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="—">0</td>
+<td title="—">0</td>
+<td>0</td>
+<td>4,0</td>
+<td>0 / 0</td>
+<td>72%</td>
+<td class="rec">заказать <b>236</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">4,0 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0 дн · общее 0 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 236</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="Ozon" data-article="2000fc">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>2000FC <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="—">0</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,4</td>
+<td>0 / 0</td>
+<td>—</td>
+<td class="rec">заказать <b>24</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0 дн · общее 0 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 24</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="yh4000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>YH4000 <span class="flag">ФФ -2 (резерв/брак) → считаю как 0</span> <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 1">1</td>
+<td title="ВЛД: -2">0</td>
+<td>0</td>
+<td>2,9</td>
+<td>0.3 / 0.3</td>
+<td>—</td>
+<td class="rec">заказать <b>171</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 1</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: -2</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">2,9 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0.3 дн · общее 0.3 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 171</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="carp 0.30">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>CARP 0.30 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 6">6</td>
+<td title="—">0</td>
+<td>0</td>
+<td>5,0</td>
+<td>1.2 / 1.2</td>
+<td>100%</td>
+<td class="rec">заказать <b>289</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 6</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">5,0 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 1.2 дн · общее 1.2 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 289</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="ff1108-1cwla">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>FF1108-1CWLA <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 4">4</td>
+<td title="—">0</td>
+<td>0</td>
+<td>3,3</td>
+<td>1.2 / 1.2</td>
+<td>69%</td>
+<td class="rec">заказать <b>191</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 4 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">3,3 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 1.2 дн · общее 1.2 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 191</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="кораблик черный">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>Кораблик черный <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 1 · Ozon: 2">3</td>
+<td title="—">0</td>
+<td>0</td>
+<td>2,2</td>
+<td>1.4 / 1.4</td>
+<td>64%</td>
+<td class="rec">заказать <b>127</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 1 · Ozon: 2</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">2,2 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 1.4 дн · общее 1.4 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 127</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="sy2000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>SY2000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 23 · Ozon: 1">24</td>
+<td title="—">0</td>
+<td>0</td>
+<td>11,4</td>
+<td>2.1 / 2.1</td>
+<td>58%</td>
+<td class="rec">заказать <b>649</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 23 · Ozon: 1</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">11,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 2.1 дн · общее 2.1 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 649</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="Ozon" data-article="kaida.hooligan2,4метра,тест10-30грамм">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>KAIDA.HOOLIGAN2,4метра,тест10-30грамм <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 1">1</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,4</td>
+<td>2.5 / 2.5</td>
+<td>—</td>
+<td class="rec">заказать <b>23</b></td>
+<td>24 444 ₽</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">Ozon: 1</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 2.5 дн · общее 2.5 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">1 063 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 23</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">24 444 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="carp 0.20">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>CARP 0.20 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 73">73</td>
+<td title="—">0</td>
+<td>0</td>
+<td>15,5</td>
+<td>4.7 / 4.7</td>
+<td>65%</td>
+<td class="rec">заказать <b>842</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 73</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">15,5 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 4.7 дн · общее 4.7 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 842</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="ngk14000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>NGK14000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 1 · Ozon: 18">19</td>
+<td title="—">0</td>
+<td>0</td>
+<td>3,2</td>
+<td>5.9 / 5.9</td>
+<td>—</td>
+<td class="rec">заказать <b>170</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 1 · Ozon: 18</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">3,2 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 5.9 дн · общее 5.9 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 170</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="адаптершуруп 22">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>АдаптерШуруп 22 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>Продаем в сезон</td>
+<td title="WB: 3">3</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,5</td>
+<td>6 / 6</td>
+<td>67%</td>
+<td class="rec">заказать <b>27</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 3 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,5 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 6 дн · общее 6 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 27</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB" data-article="катушка shimano 19 sienna c3000 fg">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>Катушка Shimano 19 Sienna C3000 FG <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 4">4</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,4</td>
+<td>10 / 10</td>
+<td>—</td>
+<td class="rec">заказать <b>20</b></td>
+<td>37 615 ₽</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 4</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 10 дн · общее 10 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">1 881 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 20</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">37 615 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB" data-article="катушка shimano 21 nexave 4000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>Катушка Shimano 21 Nexave 4000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 6">6</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,6</td>
+<td>10 / 10</td>
+<td>—</td>
+<td class="rec">заказать <b>30</b></td>
+<td>92 157 ₽</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 6</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,6 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 10 дн · общее 10 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">3 072 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 30</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">92 157 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="sy5000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>SY5000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 57 · Ozon: 15">72</td>
+<td title="—">0</td>
+<td>14</td>
+<td>8,6</td>
+<td>8.4 / 10</td>
+<td>66%</td>
+<td class="rec">заказать <b>422</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 57 · Ozon: 15</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">14</span></div><div class="kv"><span class="k">Скорость</span><span class="v">8,6 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 8.4 дн · общее 10 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 422</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="Ozon" data-article="2500fc">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>2500FC <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="—">0</td>
+<td title="ВЛД: 6">6</td>
+<td>0</td>
+<td>0,6</td>
+<td>0 / 10</td>
+<td>—</td>
+<td class="rec">заказать <b>30</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: 6</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,6 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0 дн · общее 10 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 6 · заказать в Китае 30</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="carp 0.40">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>CARP 0.40 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 23">23</td>
+<td title="—">0</td>
+<td>0</td>
+<td>2,0</td>
+<td>11.5 / 11.5</td>
+<td>—</td>
+<td class="rec">заказать <b>95</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 23</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">2,0 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 11.5 дн · общее 11.5 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 95</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="sy6000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>SY6000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 7">7</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,6</td>
+<td>11.7 / 11.7</td>
+<td>63%</td>
+<td class="rec">заказать <b>29</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 7</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,6 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 11.7 дн · общее 11.7 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 29</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="carp 0.18">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>CARP 0.18 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 30">30</td>
+<td title="—">0</td>
+<td>0</td>
+<td>2,4</td>
+<td>12.5 / 12.5</td>
+<td>—</td>
+<td class="rec">заказать <b>112</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 30</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">2,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 12.5 дн · общее 12.5 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 112</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="carp 0.35">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E5484D"></span>CARP 0.35 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 3 · Ozon: 60">63</td>
+<td title="—">0</td>
+<td>0</td>
+<td>5,0</td>
+<td>12.6 / 12.6</td>
+<td>90%</td>
+<td class="rec">заказать <b>232</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 3 · Ozon: 60</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">5,0 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 12.6 дн · общее 12.6 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 232</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x4 0.18">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>X4 0.18 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 15">15</td>
+<td title="ВЛД: 156">156</td>
+<td>160</td>
+<td>23,7</td>
+<td>0.6 / 14</td>
+<td>64%</td>
+<td class="rec">заказать <b>1 068</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 15 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: 156</span></div><div class="kv"><span class="k">Едет</span><span class="v">160</span></div><div class="kv"><span class="k">Скорость</span><span class="v">23,7 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0.6 дн · общее 14 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 156 · заказать в Китае 1 068</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB" data-article="катушка shimano 22 catana 2500 fe">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>Катушка Shimano 22 Catana 2500 FE <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 6">6</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,4</td>
+<td>15 / 15</td>
+<td>—</td>
+<td class="rec">заказать <b>18</b></td>
+<td>37 916 ₽</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 6</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 15 дн · общее 15 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">2 106 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 18</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">37 916 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="kaida.hooligan2,1м,тест5-20грамм">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>KAIDA.HOOLIGAN2,1м,тест5-20грамм <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 7">7</td>
+<td title="МСК-1: 14">14</td>
+<td>2</td>
+<td>1,4</td>
+<td>5 / 16.4</td>
+<td>50%</td>
+<td class="rec">заказать <b>60</b></td>
+<td>57 694 ₽</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 7</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">МСК-1: 14</span></div><div class="kv"><span class="k">Едет</span><span class="v">2</span></div><div class="kv"><span class="k">Скорость</span><span class="v">1,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 5 дн · общее 16.4 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">962 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 14 · заказать в Китае 60</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">57 694 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB" data-article="катушка shimano 19 sienna 4000 fg">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>Катушка Shimano 19 Sienna 4000 FG <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 5">5</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,3</td>
+<td>16.7 / 16.7</td>
+<td>—</td>
+<td class="rec">заказать <b>13</b></td>
+<td>26 080 ₽</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 5</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,3 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 16.7 дн · общее 16.7 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">2 006 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 13</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">26 080 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="ngk9000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>NGK9000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 13 · Ozon: 14">27</td>
+<td title="—">0</td>
+<td>0</td>
+<td>1,4</td>
+<td>19.3 / 19.3</td>
+<td>—</td>
+<td class="rec">заказать <b>56</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 13 · Ozon: 14</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">1,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 19.3 дн · общее 19.3 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 56</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="ngk12000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>NGK12000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 12 · Ozon: 15">27</td>
+<td title="—">0</td>
+<td>0</td>
+<td>1,3</td>
+<td>20.8 / 20.8</td>
+<td>—</td>
+<td class="rec">заказать <b>50</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 12 · Ozon: 15</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">1,3 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 20.8 дн · общее 20.8 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 50</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="sy4000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>SY4000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 64 · Ozon: 44">108</td>
+<td title="—">0</td>
+<td>15</td>
+<td>5,7</td>
+<td>18.9 / 21.6</td>
+<td>62%</td>
+<td class="rec">заказать <b>214</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 64 · Ozon: 44</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">15</span></div><div class="kv"><span class="k">Скорость</span><span class="v">5,7 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 18.9 дн · общее 21.6 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 214</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="cd3000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>CD3000 <span class="flag">ФФ -4 (резерв/брак) → считаю как 0</span> <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 22">22</td>
+<td title="ВЛД: -4">0</td>
+<td>0</td>
+<td>1,0</td>
+<td>22 / 22</td>
+<td>100%</td>
+<td class="rec">заказать <b>37</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 22</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: -4</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">1,0 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 22 дн · общее 22 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 37</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="mc3000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>MC3000 <span class="flag">ФФ -20 (резерв/брак) → считаю как 0</span> <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 214 · Ozon: 114">328</td>
+<td title="ВЛД: -20">0</td>
+<td>10</td>
+<td>15,2</td>
+<td>21.6 / 22.2</td>
+<td>59%</td>
+<td class="rec">заказать <b>559</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 214 · Ozon: 114</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: -20</span></div><div class="kv"><span class="k">Едет</span><span class="v">10</span></div><div class="kv"><span class="k">Скорость</span><span class="v">15,2 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 21.6 дн · общее 22.2 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 559</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="Ozon" data-article="golden scorpion2.40">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>Golden Scorpion2.40 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 20">20</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,9</td>
+<td>22.2 / 22.2</td>
+<td>—</td>
+<td class="rec">заказать <b>34</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">Ozon: 20</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,9 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 22.2 дн · общее 22.2 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 34</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="жилет детский дешевый 50 кг">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>Жилет детский дешевый 50 кг <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 167 · Ozon: 31">198</td>
+<td title="—">0</td>
+<td>0</td>
+<td>8,8</td>
+<td>22.5 / 22.5</td>
+<td>59%</td>
+<td class="rec">заказать <b>322</b></td>
+<td>167 762 ₽</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 167 · Ozon: 31</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">8,8 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 22.5 дн · общее 22.5 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">521 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 322</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">167 762 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="dy4000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>DY4000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 110 · Ozon: 65">175</td>
+<td title="—">0</td>
+<td>23</td>
+<td>8,5</td>
+<td>20.6 / 23.3</td>
+<td>58%</td>
+<td class="rec">заказать <b>304</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 110 · Ozon: 65</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">23</span></div><div class="kv"><span class="k">Скорость</span><span class="v">8,5 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 20.6 дн · общее 23.3 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 304</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="кораблик зеленый">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>Кораблик зеленый <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 12 · Ozon: 52">64</td>
+<td title="—">0</td>
+<td>23</td>
+<td>3,6</td>
+<td>17.8 / 24.2</td>
+<td>58%</td>
+<td class="rec">заказать <b>126</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 12 · Ozon: 52</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">23</span></div><div class="kv"><span class="k">Скорость</span><span class="v">3,6 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 17.8 дн · общее 24.2 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 126</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="carp 0.28">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>CARP 0.28 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 72">72</td>
+<td title="ВЛД: 125">125</td>
+<td>235</td>
+<td>17,8</td>
+<td>4 / 24.3</td>
+<td>59%</td>
+<td class="rec">заказать <b>619</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 72 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: 125</span></div><div class="kv"><span class="k">Едет</span><span class="v">235</span></div><div class="kv"><span class="k">Скорость</span><span class="v">17,8 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 4 дн · общее 24.3 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 125 · заказать в Китае 619</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="dy3000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>DY3000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 45 · Ozon: 98">143</td>
+<td title="ВЛД: 72">72</td>
+<td>40</td>
+<td>10,1</td>
+<td>14.2 / 25.2</td>
+<td>58%</td>
+<td class="rec">заказать <b>341</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 45 · Ozon: 98</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: 72</span></div><div class="kv"><span class="k">Едет</span><span class="v">40</span></div><div class="kv"><span class="k">Скорость</span><span class="v">10,1 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 14.2 дн · общее 25.2 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 341</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB" data-article="кораблик зеленый и fl168lic (d+t) -ice">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>Кораблик зеленый и FL168LiC (D+T) -ice <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 13">13</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,5</td>
+<td>26 / 26</td>
+<td>—</td>
+<td class="rec">заказать <b>17</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 13</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,5 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 26 дн · общее 26 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 17</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB" data-article="катушка shimano 19 sienna 2000 fg">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>Катушка Shimano 19 Sienna 2000 FG <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 8">8</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,3</td>
+<td>26.7 / 26.7</td>
+<td>—</td>
+<td class="rec">заказать <b>10</b></td>
+<td>18 808 ₽</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 8</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,3 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 26.7 дн · общее 26.7 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">1 881 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 10</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">18 808 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB" data-article="skyline16,18,20">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>Skyline16,18,20 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 56">56</td>
+<td title="—">0</td>
+<td>0</td>
+<td>2,1</td>
+<td>26.7 / 26.7</td>
+<td>59%</td>
+<td class="rec">заказать <b>68</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 56</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">2,1 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 26.7 дн · общее 26.7 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 68</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="skyline0,22">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#FF8C1F"></span>SKYLINE0,22 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 124">124</td>
+<td title="КЗН: 280">280</td>
+<td>265</td>
+<td>24,4</td>
+<td>5.1 / 27.4</td>
+<td>61%</td>
+<td class="rec">заказать <b>771</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 124 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 280</span></div><div class="kv"><span class="k">Едет</span><span class="v">265</span></div><div class="kv"><span class="k">Скорость</span><span class="v">24,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 5.1 дн · общее 27.4 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 280 · заказать в Китае 771</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="skyline0,20">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>SKYLINE0,20 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="—">0</td>
+<td title="КЗН: 260">260</td>
+<td>265</td>
+<td>17,3</td>
+<td>0 / 30.3</td>
+<td>68%</td>
+<td class="rec">заказать <b>496</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 0 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 260</span></div><div class="kv"><span class="k">Едет</span><span class="v">265</span></div><div class="kv"><span class="k">Скорость</span><span class="v">17,3 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0 дн · общее 30.3 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 260 · заказать в Китае 496</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="skyline0,16">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>SKYLINE0,16 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 45">45</td>
+<td title="КЗН: 385">385</td>
+<td>195</td>
+<td>19,6</td>
+<td>2.3 / 31.9</td>
+<td>61%</td>
+<td class="rec">заказать <b>532</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 45 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 385</span></div><div class="kv"><span class="k">Едет</span><span class="v">195</span></div><div class="kv"><span class="k">Скорость</span><span class="v">19,6 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 2.3 дн · общее 31.9 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 385 · заказать в Китае 532</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="dy7000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>DY7000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 84 · Ozon: 72">156</td>
+<td title="—">0</td>
+<td>5</td>
+<td>4,9</td>
+<td>31.8 / 32.9</td>
+<td>60%</td>
+<td class="rec">заказать <b>129</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 84 · Ozon: 72</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">5</span></div><div class="kv"><span class="k">Скорость</span><span class="v">4,9 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 31.8 дн · общее 32.9 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 129</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x8power(цветная)0,22">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>X8POWER(цветная)0,22 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 7 · Ozon: 1">8</td>
+<td title="КЗН: 308">308</td>
+<td>125</td>
+<td>13,2</td>
+<td>0.6 / 33.4</td>
+<td>65%</td>
+<td class="rec">заказать <b>338</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 7 · Ozon: 1</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 308</span></div><div class="kv"><span class="k">Едет</span><span class="v">125</span></div><div class="kv"><span class="k">Скорость</span><span class="v">13,2 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0.6 дн · общее 33.4 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 308 · заказать в Китае 338</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x4 0.16">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>X4 0.16 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 92 · Ozon: 1">93</td>
+<td title="ВЛД: 311">311</td>
+<td>195</td>
+<td>17,5</td>
+<td>5.3 / 34.2</td>
+<td>59%</td>
+<td class="rec">заказать <b>434</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 92 · Ozon: 1</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: 311</span></div><div class="kv"><span class="k">Едет</span><span class="v">195</span></div><div class="kv"><span class="k">Скорость</span><span class="v">17,5 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 5.3 дн · общее 34.2 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 311 · заказать в Китае 434</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="ngk10000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>NGK10000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 19 · Ozon: 19">38</td>
+<td title="—">0</td>
+<td>0</td>
+<td>1,0</td>
+<td>38 / 38</td>
+<td>—</td>
+<td class="rec">заказать <b>21</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 19 · Ozon: 19</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">1,0 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 38 дн · общее 38 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 21</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="sy3000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>SY3000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 165 · Ozon: 21">186</td>
+<td title="—">0</td>
+<td>0</td>
+<td>4,8</td>
+<td>38.8 / 38.8</td>
+<td>57%</td>
+<td class="rec">заказать <b>98</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 165 · Ozon: 21</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">4,8 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 38.8 дн · общее 38.8 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 98</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="fl168lic-ice">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>FL168LiC-Ice <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 32 · Ozon: 13">45</td>
+<td title="—">0</td>
+<td>10</td>
+<td>1,4</td>
+<td>32.1 / 39.3</td>
+<td>—</td>
+<td class="rec">заказать <b>28</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 32 · Ozon: 13</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">10</span></div><div class="kv"><span class="k">Скорость</span><span class="v">1,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 32.1 дн · общее 39.3 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 28</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="Ozon" data-article="kaida.hooligan2,7метра,тест10-30грамм">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>KAIDA.HOOLIGAN2,7метра,тест10-30грамм <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="Ozon: 12">12</td>
+<td title="—">0</td>
+<td>0</td>
+<td>0,3</td>
+<td>40 / 40</td>
+<td>—</td>
+<td class="rec">заказать <b>6</b></td>
+<td>6 680 ₽</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">Ozon: 12</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">—</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,3 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 40 дн · общее 40 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">1 113 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 6</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">6 680 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB" data-article="bg10000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>BG10000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 35">35</td>
+<td title="ВЛД: 24">24</td>
+<td>0</td>
+<td>1,4</td>
+<td>25 / 42.1</td>
+<td>75%</td>
+<td class="rec">заказать <b>24</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 35</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: 24</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">1,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 25 дн · общее 42.1 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 24</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="skyline0,18">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>SKYLINE0,18 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 296">296</td>
+<td title="КЗН: 322">322</td>
+<td>110</td>
+<td>17,1</td>
+<td>17.3 / 42.6</td>
+<td>65%</td>
+<td class="rec">заказать <b>281</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 296 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 322</span></div><div class="kv"><span class="k">Едет</span><span class="v">110</span></div><div class="kv"><span class="k">Скорость</span><span class="v">17,1 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 17.3 дн · общее 42.6 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 281</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="x4 0.14">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>X4 0.14 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 222 · Ozon: 1">223</td>
+<td title="ВЛД: 237">237</td>
+<td>50</td>
+<td>10,4</td>
+<td>21.4 / 49</td>
+<td>63%</td>
+<td class="rec">заказать <b>104</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 222 · Ozon: 1</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: 237</span></div><div class="kv"><span class="k">Едет</span><span class="v">50</span></div><div class="kv"><span class="k">Скорость</span><span class="v">10,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 21.4 дн · общее 49 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 104</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="Ozon" data-article="kaida.hooligan2,7метра,тест5-20грамм">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>KAIDA.HOOLIGAN2,7метра,тест5-20грамм <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="—">0</td>
+<td title="КЗН: 1 · ВЛД: 11">12</td>
+<td>15</td>
+<td>0,5</td>
+<td>0 / 54</td>
+<td>—</td>
+<td class="rec">заказать <b>3</b></td>
+<td>3 340 ₽</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 1 · ВЛД: 11</span></div><div class="kv"><span class="k">Едет</span><span class="v">15</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,5 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 0 дн · общее 54 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">1 113 ₽</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 12 · заказать в Китае 3</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">3 340 ₽</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="ms90/65000">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>MS90/65000 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 7">7</td>
+<td title="ВЛД: 15">15</td>
+<td>0</td>
+<td>0,4</td>
+<td>17.5 / 55</td>
+<td>—</td>
+<td class="rec">заказать <b>2</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 7 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">ВЛД: 15</span></div><div class="kv"><span class="k">Едет</span><span class="v">0</span></div><div class="kv"><span class="k">Скорость</span><span class="v">0,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 17.5 дн · общее 55 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 2</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="skyline0,30">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#E0B400"></span>SKYLINE0,30 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 68 · Ozon: 5">73</td>
+<td title="КЗН: 295">295</td>
+<td>150</td>
+<td>9,4</td>
+<td>7.8 / 55.1</td>
+<td>59%</td>
+<td class="rec">заказать <b>37</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 68 · Ozon: 5</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 295</span></div><div class="kv"><span class="k">Едет</span><span class="v">150</span></div><div class="kv"><span class="k">Скорость</span><span class="v">9,4 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 7.8 дн · общее 55.1 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">отгрузить ФФ→МП 191 · заказать в Китае 37</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr><tr class="main" onclick="td(this)" data-mp="WB Ozon" data-article="skyline0,28">
+<td class="art"><span class="caret">▸</span><span class="dot" style="background:#30A46C"></span>SKYLINE0,28 <span class="flag">срок поставки не задан</span></td>
+<td>—</td>
+<td>В продаже</td>
+<td title="WB: 136">136</td>
+<td title="КЗН: 309">309</td>
+<td>105</td>
+<td>9,5</td>
+<td>14.3 / 57.9</td>
+<td>76%</td>
+<td class="rec">заказать <b>11</b></td>
+<td>—</td></tr><tr class="det" style="display:none"><td colspan="11"><div class="detwrap"><div class="detcol"><div class="kv"><span class="k">Остаток МП (по площадкам)</span><span class="v">WB: 136 · Ozon: 0</span></div><div class="kv"><span class="k">Остаток ФФ (по складам)</span><span class="v">КЗН: 309</span></div><div class="kv"><span class="k">Едет</span><span class="v">105</span></div><div class="kv"><span class="k">Скорость</span><span class="v">9,5 шт/д</span></div><div class="kv"><span class="k">Покрытие</span><span class="v">МП 14.3 дн · общее 57.9 дн</span></div><div class="kv"><span class="k">Срок Китая (lead)</span><span class="v">— ⚠️ по умолчанию</span></div><div class="kv"><span class="k">Себестоимость</span><span class="v">—</span></div><div class="kv"><span class="k">Рекомендация</span><span class="v">заказать в Китае 11</span></div><div class="kv"><span class="k">Сумма закупки</span><span class="v">—</span></div></div><div class="detcol"><div class="subt">Локализация по регионам</div><span class="muted">нет данных по регионам</span></div></div></td></tr></tbody></table></div>
+  
+  <details class="exgroup"><summary>Затоварка (&gt;120 дней) — 64</summary><table><thead><tr><th>Артикул</th><th>Статус</th><th>Остаток МП</th><th>Остаток ФФ</th><th>Скор/д</th><th>Покрытие</th></tr></thead><tbody><tr><td class="art">Жерлицы оснащенные комплект</td><td>Продаем в сезон</td><td>463</td><td>0</td><td>0,3</td><td>1543.3</td></tr><tr><td class="art">Жилет дешевый 100кг</td><td>В продаже</td><td>39</td><td>230</td><td>0,8</td><td>336.2</td></tr><tr><td class="art">Жилет китай 100 кг</td><td>В продаже</td><td>0</td><td>0</td><td>0,8</td><td>393.8</td></tr><tr><td class="art">Жилет китай 50 кг</td><td>В продаже</td><td>0</td><td>0</td><td>1,2</td><td>262.5</td></tr><tr><td class="art">Зимняя палатка</td><td>Продаём в сезон</td><td>33</td><td>0</td><td>0,1</td><td>330</td></tr><tr><td class="art">Катушка Daiwa 21 Freams LT 2500</td><td>В продаже</td><td>13</td><td>0</td><td>0,1</td><td>130</td></tr><tr><td class="art">Катушка Daiwa Sweepfire E 2500C</td><td>В продаже</td><td>38</td><td>0</td><td>0,1</td><td>380</td></tr><tr><td class="art">Катушка Shimano 21 Nexave 1000</td><td>В продаже</td><td>35</td><td>0</td><td>0,2</td><td>175</td></tr><tr><td class="art">Катушка Shimano 21 Nexave 2500 HG</td><td>В продаже</td><td>15</td><td>0</td><td>0,1</td><td>150</td></tr><tr><td class="art">Катушка Shimano 21 Nexave 2500 S</td><td>В продаже</td><td>20</td><td>0</td><td>0,1</td><td>200</td></tr><tr><td class="art">Катушка Shimano 22 Sahara 500</td><td>В продаже</td><td>13</td><td>0</td><td>0,1</td><td>130</td></tr><tr><td class="art">леска флюр. 30м - 0,10 мм</td><td>В продаже</td><td>86</td><td>105</td><td>0,7</td><td>301.4</td></tr><tr><td class="art">леска флюр. 30м - 0,12 мм</td><td>В продаже</td><td>79</td><td>105</td><td>0,9</td><td>226.7</td></tr><tr><td class="art">леска флюр. 30м - 0,14 мм</td><td>В продаже</td><td>70</td><td>125</td><td>0,7</td><td>321.4</td></tr><tr><td class="art">леска флюр. 30м - 0,16 мм</td><td>В продаже</td><td>72</td><td>315</td><td>0,6</td><td>695</td></tr><tr><td class="art">леска флюр. 30м - 0,18 мм</td><td>В продаже</td><td>66</td><td>315</td><td>0,6</td><td>685</td></tr><tr><td class="art">леска флюр. 30м - 0,20 мм</td><td>В продаже</td><td>73</td><td>325</td><td>0,7</td><td>611.4</td></tr><tr><td class="art">леска флюр. 30м - 0,23 мм</td><td>В продаже</td><td>99</td><td>55</td><td>0,8</td><td>192.5</td></tr><tr><td class="art">леска флюр. 30м - 0,26 мм</td><td>В продаже</td><td>82</td><td>115</td><td>0,2</td><td>985</td></tr><tr><td class="art">леска флюр. 30м - 0,28 мм</td><td>В продаже</td><td>68</td><td>115</td><td>0,8</td><td>228.8</td></tr><tr><td class="art">леска флюр. 30м - 0,30 мм</td><td>В продаже</td><td>78</td><td>115</td><td>0,6</td><td>321.7</td></tr><tr><td class="art">леска флюр. 30м - 0,35 мм</td><td>В продаже</td><td>83</td><td>15</td><td>0,4</td><td>245</td></tr><tr><td class="art">леска флюр. 30м - 0,37 мм</td><td>В продаже</td><td>78</td><td>15</td><td>0,6</td><td>155</td></tr><tr><td class="art">леска флюр. 30м - 0,60 мм</td><td>В продаже</td><td>81</td><td>15</td><td>0,6</td><td>160</td></tr><tr><td class="art">леска флюр. 50м - 0,10 мм</td><td>В продаже</td><td>35</td><td>143</td><td>0,7</td><td>282.9</td></tr><tr><td class="art">леска флюр. 50м - 0,12 мм</td><td>В продаже</td><td>39</td><td>135</td><td>0,5</td><td>348</td></tr><tr><td class="art">леска флюр. 50м - 0,14 мм</td><td>В продаже</td><td>34</td><td>133</td><td>0,7</td><td>267.1</td></tr><tr><td class="art">леска флюр. 50м - 0,16 мм</td><td>В продаже</td><td>40</td><td>345</td><td>0,2</td><td>1925</td></tr><tr><td class="art">леска флюр. 50м - 0,18 мм</td><td>В продаже</td><td>41</td><td>343</td><td>0,7</td><td>548.6</td></tr><tr><td class="art">леска флюр. 50м - 0,20 мм</td><td>В продаже</td><td>100</td><td>283</td><td>0,3</td><td>1276.7</td></tr><tr><td class="art">леска флюр. 50м - 0,23 мм</td><td>В продаже</td><td>46</td><td>140</td><td>0,2</td><td>930</td></tr><tr><td class="art">леска флюр. 50м - 0,26 мм</td><td>В продаже</td><td>60</td><td>138</td><td>0,4</td><td>495</td></tr><tr><td class="art">леска флюр. 50м - 0,28 мм</td><td>В продаже</td><td>56</td><td>145</td><td>0,1</td><td>2010</td></tr><tr><td class="art">леска флюр. 50м - 0,30 мм</td><td>В продаже</td><td>47</td><td>143</td><td>0,3</td><td>633.3</td></tr><tr><td class="art">леска флюр. 50м - 0,35 мм</td><td>В продаже</td><td>44</td><td>43</td><td>0,1</td><td>870</td></tr><tr><td class="art">леска флюр. 50м - 0,40 мм</td><td>В продаже</td><td>55</td><td>43</td><td>0,1</td><td>980</td></tr><tr><td class="art">леска флюр. 50м - 0,50 мм</td><td>В продаже</td><td>54</td><td>45</td><td>0,1</td><td>990</td></tr><tr><td class="art">леска флюр. 50м - 0,62 мм</td><td>В продаже</td><td>53</td><td>45</td><td>0,1</td><td>980</td></tr><tr><td class="art">леска300_0,1</td><td>В продаже</td><td>64</td><td>0</td><td>0,5</td><td>128</td></tr><tr><td class="art">леска300_0,12</td><td>В продаже</td><td>116</td><td>0</td><td>0,8</td><td>145</td></tr><tr><td class="art">леска300_0,16</td><td>В продаже</td><td>130</td><td>634</td><td>0,4</td><td>1910</td></tr><tr><td class="art">леска300_0,18</td><td>В продаже</td><td>163</td><td>635</td><td>0,3</td><td>2660</td></tr><tr><td class="art">леска300_0,2</td><td>В продаже</td><td>128</td><td>437</td><td>1,0</td><td>565</td></tr><tr><td class="art">леска300_0,25</td><td>В продаже</td><td>118</td><td>335</td><td>0,8</td><td>566.2</td></tr><tr><td class="art">леска300_0,3</td><td>В продаже</td><td>126</td><td>347</td><td>1,0</td><td>473</td></tr><tr><td class="art">леска300_0,35</td><td>В продаже</td><td>115</td><td>126</td><td>1,0</td><td>241</td></tr><tr><td class="art">леска300_0,4</td><td>В продаже</td><td>110</td><td>137</td><td>1,4</td><td>176.4</td></tr><tr><td class="art">Эхолот FL168LiC (D+T) -ice</td><td>В продаже</td><td>31</td><td>29</td><td>0,1</td><td>600</td></tr><tr><td class="art">Ящик зимний рыболовный</td><td>Продаём в сезон</td><td>29</td><td>0</td><td>0,1</td><td>290</td></tr><tr><td class="art">CARP 0.26</td><td>В продаже</td><td>273</td><td>623</td><td>3,1</td><td>289</td></tr><tr><td class="art">DY5000</td><td>В продаже</td><td>177</td><td>294</td><td>3,9</td><td>127.2</td></tr><tr><td class="art">DY6000</td><td>В продаже</td><td>289</td><td>289</td><td>2,9</td><td>199.3</td></tr><tr><td class="art">FF718LiC-T</td><td>В продаже</td><td>74</td><td>27</td><td>0,4</td><td>252.5</td></tr><tr><td class="art">FRA3000</td><td>В продаже</td><td>14</td><td>0</td><td>0,1</td><td>140</td></tr><tr><td class="art">SKYLINE0,40</td><td>В продаже</td><td>98</td><td>297</td><td>4,0</td><td>122.5</td></tr><tr><td class="art">X8POWER(цветная)0,12</td><td>В продаже</td><td>119</td><td>300</td><td>2,3</td><td>223.5</td></tr><tr><td class="art">X8POWER(цветная)0,14</td><td>В продаже</td><td>160</td><td>327</td><td>3,8</td><td>161.1</td></tr><tr><td class="art">X8POWER(цветная)0,16</td><td>В продаже</td><td>167</td><td>327</td><td>2,8</td><td>221.1</td></tr><tr><td class="art">X8POWER(ЦВЕТНАЯ)0.30</td><td>В продаже</td><td>78</td><td>279</td><td>1,5</td><td>301.3</td></tr><tr><td class="art">KAIDA.HOOLIGAN2,4м,тест5-20грамм</td><td>В продаже</td><td>0</td><td>31</td><td>0,1</td><td>330</td></tr><tr><td class="art">blackdragon2.1</td><td>В продаже</td><td>23</td><td>25</td><td>0,1</td><td>480</td></tr><tr><td class="art">FL168LiC (D+T) -ice</td><td>В продаже</td><td>30</td><td>29</td><td>0,6</td><td>166.7</td></tr><tr><td class="art">удилище_black dragon_270</td><td>—</td><td>34</td><td>38</td><td>0,1</td><td>720</td></tr><tr><td class="art">blackdragon1,8</td><td>В продаже</td><td>52</td><td>43</td><td>0,2</td><td>475</td></tr></tbody></table></details>
+  <details class="exgroup"><summary>Тихоходы (медленно продаются — не возим из Китая) — 18</summary><table><thead><tr><th>Артикул</th><th>Статус</th><th>Остаток МП</th><th>Остаток ФФ</th><th>Скор/д</th><th>Покрытие</th></tr></thead><tbody><tr><td class="art">даиметр 19</td><td>Продаём в сезон</td><td>0</td><td>0</td><td>0,1</td><td>0</td></tr><tr><td class="art">диаметр 18</td><td>Продаём в сезон</td><td>0</td><td>0</td><td>0,1</td><td>0</td></tr><tr><td class="art">Катушка Daiwa Sweepfire E 5000 C</td><td>В продаже</td><td>12</td><td>0</td><td>0,1</td><td>120</td></tr><tr><td class="art">Катушка Shimano 19 Sienna 1000 FG</td><td>В продаже</td><td>10</td><td>0</td><td>0,2</td><td>50</td></tr><tr><td class="art">Катушка Shimano 19 Sienna 2500 FG</td><td>В продаже</td><td>11</td><td>0</td><td>0,2</td><td>55</td></tr><tr><td class="art">Катушка Shimano 19 Sienna 2500 HGFG</td><td>В продаже</td><td>11</td><td>0</td><td>0,1</td><td>110</td></tr><tr><td class="art">Катушка Shimano 21 Nexave 4000 HG</td><td>В продаже</td><td>5</td><td>0</td><td>0,2</td><td>25</td></tr><tr><td class="art">Катушка Shimano 21 Nexave C3000</td><td>В продаже</td><td>0</td><td>0</td><td>0,1</td><td>0</td></tr><tr><td class="art">Катушка Shimano 21 Nexave C3000 HG</td><td>В продаже</td><td>3</td><td>0</td><td>0,1</td><td>30</td></tr><tr><td class="art">Катушка Shimano 22 Catana 1000 FE</td><td>В продаже</td><td>7</td><td>0</td><td>0,1</td><td>70</td></tr><tr><td class="art">Катушка Shimano 22 Sahara 2500</td><td>В продаже</td><td>9</td><td>0</td><td>0,2</td><td>45</td></tr><tr><td class="art">Шнек Iceberg 130R</td><td>Продаём в сезон</td><td>0</td><td>0</td><td>0,1</td><td>0</td></tr><tr><td class="art">FRA4000</td><td>В продаже</td><td>11</td><td>0</td><td>0,1</td><td>110</td></tr><tr><td class="art">FRA6000</td><td>В продаже</td><td>0</td><td>0</td><td>0,1</td><td>0</td></tr><tr><td class="art">KAIDAFALCONS330</td><td>В продаже</td><td>1</td><td>10</td><td>0,1</td><td>110</td></tr><tr><td class="art">KAIDAFALCONS270</td><td>В продаже</td><td>0</td><td>0</td><td>0,1</td><td>0</td></tr><tr><td class="art">KAIDAFALCONS390</td><td>В продаже</td><td>0</td><td>0</td><td>0,1</td><td>50</td></tr><tr><td class="art">S74MH-2</td><td>В продаже</td><td>0</td><td>0</td><td>0,1</td><td>0</td></tr></tbody></table></details>
+  <details class="exgroup"><summary>Не продаётся (есть остаток, скорость 0) — 26</summary><table><thead><tr><th>Артикул</th><th>Статус</th><th>Остаток МП</th><th>Остаток ФФ</th><th>Скор/д</th><th>Покрытие</th></tr></thead><tbody><tr><td class="art">Камера4,3- 30м</td><td>В продаже</td><td>7</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Катушка Daiwa 21 Freams LT 2500-XH</td><td>В продаже</td><td>14</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Катушка Shimano 19 Sienna 500</td><td>В продаже</td><td>27</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Катушка Shimano 21 Nexave 2500</td><td>В продаже</td><td>14</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Катушка Shimano 22 Miravel 1000</td><td>В продаже</td><td>6</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Катушка Shimano 22 Miravel 2500</td><td>В продаже</td><td>6</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Катушка Shimano 22 Miravel 2500 HG</td><td>В продаже</td><td>7</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Катушка Shimano 22 Miravel C2000S HG</td><td>В продаже</td><td>2</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Катушка Shimano 22 Miravel C3000 HG</td><td>В продаже</td><td>8</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Катушка Shimano 22 Sahara 3000</td><td>В продаже</td><td>1</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">леска100_0,2</td><td>В продаже</td><td>0</td><td>361</td><td>0,0</td><td>∞</td></tr><tr><td class="art">СВ_3Бут_аргумент</td><td>—</td><td>3</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Ящик зимний рыболовный2</td><td>Продаём в сезон</td><td>39</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">FRA5000</td><td>В продаже</td><td>4</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">MS90/48000</td><td>В продаже</td><td>14</td><td>8</td><td>0,0</td><td>∞</td></tr><tr><td class="art">3000-CXH</td><td>В продаже</td><td>0</td><td>2</td><td>0,0</td><td>∞</td></tr><tr><td class="art">3000/5.3</td><td>В продаже</td><td>0</td><td>64</td><td>0,0</td><td>∞</td></tr><tr><td class="art">4000/5.3</td><td>В продаже</td><td>0</td><td>6</td><td>0,0</td><td>∞</td></tr><tr><td class="art">4000-CXH</td><td>В продаже</td><td>1</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">подсак телескопический 60 см</td><td>Продаем в сезон</td><td>1</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">6102MB</td><td>В продаже</td><td>2</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">жерлицы_щука</td><td>Продаем в сезон</td><td>2</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">762MHS</td><td>В продаже</td><td>10</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">C71M-2</td><td>В продаже</td><td>7</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">удилище_black dragon_240</td><td>В продаже</td><td>33</td><td>35</td><td>0,0</td><td>∞</td></tr><tr><td class="art">набор_рыбалка_мини</td><td>В продаже</td><td>62</td><td>0</td><td>0,0</td><td>∞</td></tr></tbody></table></details>
+  <details class="exgroup"><summary>Выводим / больше не продаём — 43</summary><table><thead><tr><th>Артикул</th><th>Статус</th><th>Остаток МП</th><th>Остаток ФФ</th><th>Скор/д</th><th>Покрытие</th></tr></thead><tbody><tr><td class="art">55 см с хлыстиками</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">80см</td><td>Распродаем и выводим</td><td>19</td><td>0</td><td>0,6</td><td>31.7</td></tr><tr><td class="art">Адаптердиаметр 15,5</td><td>Распродаем и выводим</td><td>15</td><td>0</td><td>0,1</td><td>150</td></tr><tr><td class="art">верблюд китай</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Зимний набор мини</td><td>Распродаем и выводим</td><td>58</td><td>20</td><td>0,0</td><td>∞</td></tr><tr><td class="art">кан_оранжевый</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Катушка зимняя инерционная Ч / К</td><td>Распродаем и выводим</td><td>54</td><td>50</td><td>0,7</td><td>191.4</td></tr><tr><td class="art">катушка,,св540</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,1</td><td>0</td></tr><tr><td class="art">катушка640св640</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">КОБРА,св140</td><td>Больше не продаём</td><td>0</td><td>0</td><td>1,5</td><td>0</td></tr><tr><td class="art">КОБРА,свв240</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,1</td><td>0</td></tr><tr><td class="art">КРОКОДИЛЛ 270 см</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Ледобур 110 Helios Long</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Набор 5</td><td>Распродаем и выводим</td><td>65</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Набор мормышек 6 шт</td><td>Распродаем и выводим</td><td>221</td><td>100</td><td>0,4</td><td>802.5</td></tr><tr><td class="art">Палатка зимняя полуавтоматическая 200х200х170 серая</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Палатка зимняя полуавтоматическая 250х250х170 серая</td><td>Больше не продаём</td><td>2</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">перчатки без начеса зеленые</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Ратлины_набор1</td><td>Распродаем и выводим</td><td>13</td><td>0</td><td>0,1</td><td>130</td></tr><tr><td class="art">Ратлины_набор2</td><td>Распродаем и выводим</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">СВ_5Бут_аргумент</td><td>Распродаем и выводим</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">СВ_5бут_аргумент_23</td><td>Распродаем и выводим</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">СВ_7бут_аргумент</td><td>Распродаем и выводим</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">удочка 4.5м без колец</td><td>Распродаем и выводим</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">удочка 5.4м без колец</td><td>Распродаем и выводим</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">улов К-1-СН 65мм зеленая</td><td>Распродаем и выводим</td><td>36</td><td>0</td><td>0,1</td><td>360</td></tr><tr><td class="art">Фонарик CREE-Q5-T6</td><td>Распродаем и выводим</td><td>42</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Kaida Impuls II 390см тест 60-160гр.</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">PowerPro,125метров0,30</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">PowerTiger0,20</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">PowerTiger0,22</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">X4POWER 0,12</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">X4POWER 0,20</td><td>Распродаем и выводим</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">X4POWER 0,25</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">X4POWER 0,28</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">X4POWER 0,40</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">X4POWER 0,50</td><td>Распродаем и выводим</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">XS30B530B</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">XS40B540B</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">XS40B640B</td><td>Больше не продаём</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">набор_раттлинов_2</td><td>Распродаем и выводим</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">XS40B440B</td><td>Распродаем и выводим</td><td>0</td><td>0</td><td>0,0</td><td>∞</td></tr><tr><td class="art">Катушка XS40B540B</td><td>Распродаем и выводим</td><td>2</td><td>0</td><td>0,0</td><td>∞</td></tr></tbody></table></details>
+  
+</div>
+<footer>Обновлено: 01.06.2026 14:06 · только чтение, источники не изменяются</footer>
+<script>
+function showTab(i,el){document.querySelectorAll('.section').forEach((s,j)=>s.classList.toggle('active',i===j));
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');filt();}
+function td(tr){var d=tr.nextElementSibling;if(d&&d.classList.contains('det'))d.style.display=(!d.style.display||d.style.display==='none')?'table-row':'none';}
+function filt(){var q=document.getElementById('q').value.toLowerCase(),mp=document.getElementById('mp').value;
+document.querySelectorAll('.section.active tr.main').forEach(function(tr){
+var ok=(tr.dataset.article||'').indexOf(q)>=0&&(!mp||(tr.dataset.mp||'').indexOf(mp)>=0);
+tr.style.display=ok?'':'none';
+var d=tr.nextElementSibling;if(d&&d.classList.contains('det')&&!ok)d.style.display='none';});}
+</script></body></html>
