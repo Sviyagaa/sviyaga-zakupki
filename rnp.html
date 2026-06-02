@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Свияга — РНП v4</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FBF7F0;--ink:#1A1A1A;--panel:#FFFFFF;--line:#ECE5DA;--line2:#E2D9CC;
+  --muted:#8A8276;--soft:#B6AE9F;
+  --orange:#FF4D14;--amber:#FF8C1F;--gold:#FFAC1F;
+  --ok:#2E9E5B;--okbg:#E7F4EC;--warn:#E08A00;--warnbg:#FBEFD6;--bad:#E0392B;--badbg:#FBE6E3;
+  --wb:#7A2FE0;--oz:#0B6CF0;--neutral:#F0EBE2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Montserrat',sans-serif;-webkit-font-smoothing:antialiased}
+.topbar{background:var(--ink);color:#fff;display:flex;align-items:center;gap:14px;padding:13px 22px;flex-wrap:wrap}
+.logo{font-weight:900;font-size:18px}.logo .o{color:var(--orange)}
+.tsub{color:#B9B2A6;font-size:12px}
+.badges{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.badge{font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;white-space:nowrap}
+.badge.goal{background:rgba(255,140,31,.18);color:#FFC98A}.badge.date{background:rgba(255,255,255,.10);color:#D7D0C4}.badge.proto{background:rgba(255,77,20,.20);color:#FFB59B}
+.main{max-width:1120px;margin:0 auto;padding:22px 24px 60px}
+h1{font-size:22px;font-weight:800}
+.lead{color:var(--muted);font-size:13px;margin:6px 0 16px;max-width:740px;line-height:1.5}
+.months{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.mo{padding:7px 13px;border-radius:9px;border:1px solid var(--line2);background:#fff;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer}
+.mo.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.mo.fact{position:relative}.mo.fact::after{content:"";position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--ok)}
+.hint{background:rgba(255,140,31,.06);border:1px solid rgba(255,140,31,.25);border-radius:10px;padding:10px 13px;font-size:12px;color:#5b5346;margin-bottom:16px;line-height:1.5}
+.pill{display:inline-block;font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px}
+.pill.ok{background:var(--okbg);color:var(--ok)}.pill.warn{background:var(--warnbg);color:var(--warn)}.pill.bad{background:var(--badbg);color:var(--bad)}.pill.neu{background:var(--neutral);color:var(--soft)}
+
+.chan{background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.chead{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;user-select:none}
+.chead:hover{background:#FCFAF6}
+.dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}.dot.c{background:var(--orange)}.dot.w{background:var(--wb)}.dot.o{background:var(--oz)}.dot.y{background:#9A9388}
+.cname{font-weight:800;font-size:15px}.cowner{font-size:11px;color:var(--soft);font-weight:600}
+.chead .hr{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hr .hm{text-align:right}.hr .hm .hl{font-size:10px;color:var(--muted);text-transform:uppercase}.hr .hm .hv{font-family:'JetBrains Mono';font-weight:800;font-size:15px}
+.chev{width:22px;height:22px;border-radius:50%;background:var(--bg);display:grid;place-items:center;color:var(--muted);transition:transform .2s;font-size:12px}
+.chan.open .chev{transform:rotate(180deg)}
+.cbody{display:none;border-top:1px solid var(--line)}.chan.open .cbody{display:block}
+.grp{padding:10px 18px}.grp+.grp{border-top:1px dashed var(--line)}
+.gt{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--amber);margin-bottom:6px}
+.mrow{display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:8px;cursor:pointer;border-bottom:1px solid #F4EFE7}
+.mrow:last-child{border-bottom:none}
+.mrow:hover{background:#FBF7F0}
+.mrow .mn{font-weight:600;color:#3A352E;flex:1;font-size:13px;display:flex;align-items:center;gap:7px}
+.mrow .tw{font-size:10px;color:var(--soft);transition:transform .2s}
+.mrow.open .tw{transform:rotate(90deg)}
+.mrow .mp{font-family:'JetBrains Mono';color:var(--soft);font-weight:600;font-size:12.5px;width:120px;text-align:right}
+.mrow .mf{font-family:'JetBrains Mono';color:var(--ink);font-weight:800;font-size:12.5px;width:120px;text-align:right}
+.mrow .mc{width:56px;text-align:right}
+.drill{display:none;padding:4px 8px 12px 22px}
+.drill.open{display:block}
+.wk{margin:6px 0;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.wkh{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;background:#FCFAF6}
+.wkh:hover{background:#F7F1E8}
+.wkh .wn{font-weight:700;font-size:12.5px;flex:1}
+.wkh .wv{font-family:'JetBrains Mono';font-size:12px;color:var(--muted)}
+.wkh .wv b{color:var(--ink)}
+.bar{width:80px;height:7px;background:#EFEAE1;border-radius:999px;overflow:hidden}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--orange),var(--gold))}
+.days{display:none;padding:4px 0}
+.wk.open .days{display:block}
+.wk.open .wkh{background:#F2EADF}
+.day{display:flex;align-items:center;gap:10px;padding:6px 14px;font-size:12px;border-top:1px solid #F4EFE7}
+.day .dd{width:96px;color:#3A352E;font-weight:600}
+.day .dw{width:30px;color:var(--soft);font-size:11px}
+.day .dp{font-family:'JetBrains Mono';color:var(--soft);width:110px;text-align:right}
+.day .df{font-family:'JetBrains Mono';color:var(--ink);font-weight:700;width:110px;text-align:right}
+.day .dc{width:52px;text-align:right}
+.day.today{background:#FFF6EE}
+.day.future{opacity:.55}
+.foot{margin-top:20px;color:var(--muted);font-size:11.5px;line-height:1.6;border-top:1px solid var(--line);padding-top:14px}
+.foot b{color:var(--ink)}
+@media(max-width:900px){.main{padding:16px 12px 50px}.mrow .mp,.day .dp{display:none}.chead .hr .hm:nth-child(2){display:none}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">AI Свияга <span class="o">·</span> РНП</div>
+  <div class="tsub">Планёрка · месяц → недели → дни</div>
+  <div class="badges">
+    <span class="badge goal">Год: WB 230 / Ozon 160 млн</span>
+    <span class="badge date" id="rnp-fresh">данные 02.06 06:20 UTC · API</span>
+    <span class="badge proto">Прототип v4</span>
+  </div>
+</div>
+<div class="main">
+  <h1>Рука на пульсе</h1>
+  <div class="lead">Жми канал → метрику → неделю, чтобы дойти до конкретного дня. Видно динамику и точные цифры план/факт на каждый день. Закрытые дни окрашены по выполнению дневного плана — это и есть основа решений на планёрке.</div>
+  <div class="months" id="months"></div>
+  <div class="hint">💡 Как считаются дни: план месяца раскладывается по неделям (неделя = 7 дней из 30) и по дням (план месяца ÷ 30). Факт по дню тянется из WB/Ozon API. Сегодня 2 июня — закрыт только день 1, поэтому динамика пока на старте.</div>
+  <div id="channels"></div>
+  <div class="foot">
+    <b>Прототип v4 на реальных данных РНП (июнь).</b> Факт есть по WB Свияга (день 1 = 545 938 ₽ заказов при дневном плане ~537 635 ₽ по каналу). Остальные каналы и дни подтянутся из API ежедневно. Дневной план = план месяца ÷ дни; в боевой версии можно задать неравномерный план по дням недели.<br>
+    <b>Цвет дня:</b> зелёный — дневной план выполнен, жёлтый — близко, красный — недобор (для ДРР наоборот). Будущие дни — бледные (только план).
+  </div>
+</div>
+
+<script>
+const MONTHS=["Янв","Фев","Мар","Апр","Май","Июнь","Июль","Авг","Сен","Окт","Ноя","Дек"];
+const MONTHS=["Янв", "Фев", "Мар", "Апр", "Май", "Июнь", "Июль", "Авг", "Сен", "Окт", "Ноя", "Дек"];
+const WD=['вс','пн','вт','ср','чт','пт','сб'];
+const FACT=["Июнь"]; let current="Июнь";
+const TODAY=new Date(2026,5,2);
+const DAYS_IN_MONTH=30, MONTH_IDX=5, YEAR=2026;
+const WEEKS=[[1, 7], [8, 14], [15, 21], [22, 28], [29, 30]];
+window.DAYFACT={"Сумма заказов": {"2026-06-02": 39452, "2026-06-01": 406832}, "Сумма продаж": {"2026-06-02": 0, "2026-06-01": 0}};
+const CH=[{"id": "comp", "name": "Компания · Июнь", "owner": "WB (API)", "dot": "c", "groups": [{"t": "Ключевые метрики РНП", "m": [["Сумма заказов", 33225806.0, 446284, "cum", "up", "₽"], ["Сумма продаж", 30900000.0, 236212.0, "cum", "up", "₽"], ["ДРР", 10.75, 16.78, "rate", "down", "%"], ["Чистая прибыль", 0, 0, "cum", "up", "₽"]]}]}, {"id": "wbrk", "name": "WB РК", "owner": "нет раздельных данных", "dot": "w", "empty": true, "groups": []}, {"id": "ozsv", "name": "Ozon Свияга", "owner": "нет раздельных данных", "dot": "o", "empty": true, "groups": []}, {"id": "ozrk", "name": "Ozon РК", "owner": "нет раздельных данных", "dot": "o", "empty": true, "groups": []}, {"id": "ym", "name": "Яндекс Маркет", "owner": "нет раздельных данных", "dot": "y", "empty": true, "groups": []}];
+
+function fmt(v,u){
+  if(v==null) return "—";
+  if(u==="%") return v.toLocaleString("ru-RU",{maximumFractionDigits:2})+"%";
+  if(u==="₽") return Math.round(v).toLocaleString("ru-RU")+" ₽";
+  if(u==="шт") return Math.round(v).toLocaleString("ru-RU");
+  return v.toLocaleString("ru-RU",{maximumFractionDigits:2});
+}
+function clsPace(p,dir){ if(p==null) return "neu"; if(dir==="down") return p<=105?"ok":(p<=130?"warn":"bad"); return p>=90?"ok":(p>=60?"warn":"bad"); }
+function clsCum(p){ return "neu"; }
+
+// разложить метрику по дням
+function dayData(m){
+  const [name,mp,mf,type,dir,unit]=m;
+  const out=[]; // {date, wd, plan, fact, status}
+  for(let d=1; d<=DAYS_IN_MONTH; d++){
+    const date=new Date(YEAR,MONTH_IDX,d);
+    let status = date<TODAY ? "closed" : (date.getTime()===TODAY.getTime() ? "today" : "future");
+    let plan, fact;
+    const df=(window.DAYFACT&&window.DAYFACT[name])?window.DAYFACT[name]:null;
+    const key=String(YEAR)+"-"+String(MONTH_IDX+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+    const hasDF = df && (key in df);
+    if(type==="rate"){ plan=mp; fact = hasDF? df[key] : null; }
+    else { plan = mp/DAYS_IN_MONTH; fact = hasDF? df[key] : (status==="future"? null : null); }
+    out.push({d,date,wd:WD[date.getDay()],plan,fact,status,type,dir,unit});
+  }
+  return out;
+}
+function weekAgg(days,wk,type){
+  const inWk=days.filter(x=>x.d>=wk[0]&&x.d<=wk[1]);
+  if(type==="rate"){
+    const plan=inWk[0].plan; const f=inWk.find(x=>x.fact!=null); 
+    return {plan, fact: f?f.fact:null, days:inWk};
+  }
+  const plan=inWk.reduce((s,x)=>s+x.plan,0);
+  const fact=inWk.reduce((s,x)=>s+(x.fact||0),0);
+  const anyClosed=inWk.some(x=>x.status==="closed");
+  return {plan, fact: anyClosed?fact:(inWk.some(x=>x.status!=="future")?fact:0), days:inWk, future: inWk.every(x=>x.status==="future")};
+}
+
+function drillHTML(m){
+  const [name,mp,mf,type,dir,unit]=m;
+  const days=dayData(m);
+  let html="";
+  WEEKS.forEach((wk,i)=>{
+    const wa=weekAgg(days,wk,type);
+    const p = wa.plan? (wa.fact==null?null:wa.fact/wa.plan*100):null;
+    const colored = (type==="rate") ? (wa.fact!=null) : (!wa.future && wa.fact>0);
+    const cl = colored ? clsPace(p,dir) : "neu";
+    const barW = p==null?0:Math.min(100,p);
+    const dayrows=wa.days.map(x=>{
+      const dp = x.fact==null?null:(x.plan? x.fact/x.plan*100:null);
+      const dcol = (x.status==="closed") ? clsPace(dp,dir) : "neu";
+      const plabel = (type==="rate") ? fmt(x.plan,unit) : fmt(x.plan,unit);
+      const flabel = x.fact==null? "—" : fmt(x.fact,unit);
+      const pc = x.status==="closed" ? `<span class="pill ${dcol}">${dp==null?"—":Math.round(dp)+"%"}</span>` : (x.status==="today"?`<span class="pill neu">сегодня</span>`:"");
+      return `<div class="day ${x.status==='today'?'today':''} ${x.status==='future'?'future':''}">
+        <span class="dd">${String(x.d).padStart(2,'0')}.06</span><span class="dw">${x.wd}</span>
+        <span class="dp">${plabel}</span><span class="df">${flabel}</span><span class="dc">${pc}</span></div>`;
+    }).join("");
+    html+=`<div class="wk" onclick="event.stopPropagation();this.classList.toggle('open')">
+      <div class="wkh">
+        <span class="wn">Неделя ${i+1} · ${String(wk[0]).padStart(2,'0')}–${String(wk[1]).padStart(2,'0')}.06</span>
+        <span class="bar"><i style="width:${barW}%"></i></span>
+        <span class="wv">факт <b>${fmt(wa.fact,unit)}</b> / ${fmt(wa.plan,unit)}</span>
+        <span class="pill ${cl}">${p==null?"—":Math.round(p)+"%"}</span>
+      </div>
+      <div class="days">${dayrows}</div>
+    </div>`;
+  });
+  return html;
+}
+
+function render(){
+  document.getElementById("channels").innerHTML=CH.map(ch=>{
+    if(ch.empty) return `<div class="chan"><div class="chead"><span class="dot ${ch.dot}"></span><div><div class="cname">${ch.name}</div><div class="cowner">${ch.owner}</div></div><div class="hr"><span class="cowner">не запущен · нет данных</span></div></div></div>`;
+    let ho=null; ch.groups.forEach(g=>g.m.forEach(m=>{ if(m[0].indexOf("Заказы, ₽")>=0||m[0]==="Сумма заказов") ho=m; }));
+    const hp=ho?(ho[2]/ho[1]*100):null;
+    const body=ch.groups.map(g=>`<div class="grp"><div class="gt">${g.t}</div>${
+      g.m.map(m=>{
+        const [name,mp,mf,type,dir,unit]=m;
+        const p= mp? mf/mp*100:null;
+        const cl = type==="rate" ? clsPace(p,dir) : "neu";
+        const id=ch.id+"_"+name.replace(/[^a-zA-Zа-яА-Я0-9]/g,"");
+        return `<div class="mrow" onclick="var d=document.getElementById('dr_${id}');var o=d.classList.toggle('open');this.classList.toggle('open');if(o&&!d.dataset.r){d.innerHTML=window.__drill('${ch.id}','${encodeURIComponent(name)}');d.dataset.r=1;}">
+            <span class="mn"><span class="tw">▸</span>${name}</span>
+            <span class="mp">${fmt(mp,unit)}</span>
+            <span class="mf">${fmt(mf,unit)}</span>
+            <span class="mc"><span class="pill ${cl}">${p==null?"—":Math.round(p)+"%"}</span></span>
+          </div>
+          <div class="drill" id="dr_${id}"></div>`;
+      }).join("")
+    }</div>`).join("");
+    return `<div class="chan" id="ch-${ch.id}">
+      <div class="chead" onclick="document.getElementById('ch-${ch.id}').classList.toggle('open')">
+        <span class="dot ${ch.dot}"></span>
+        <div><div class="cname">${ch.name}</div><div class="cowner">${ch.owner}</div></div>
+        <div class="hr">
+          <div class="hm"><div class="hl">Заказы факт</div><div class="hv">${ho?fmt(ho[2],"₽"):"—"}</div></div>
+          <div class="hm"><div class="hl">План</div><div class="hv" style="color:var(--soft)">${ho?fmt(ho[1],"₽"):"—"}</div></div>
+          <span class="pill neu">${hp==null?"—":Math.round(hp)+"%"}</span>
+          <span class="chev">▾</span>
+        </div>
+      </div>
+      <div class="cbody">${body}</div>
+    </div>`;
+  }).join("");
+  const f=document.getElementById("ch-comp"); if(f) f.classList.add("open");
+}
+window.__drill=function(chId,nameEnc){
+  const name=decodeURIComponent(nameEnc);
+  const ch=CH.find(c=>c.id===chId); let m=null;
+  ch.groups.forEach(g=>g.m.forEach(x=>{ if(x[0]===name) m=x; }));
+  return m? drillHTML(m):"";
+};
+function renderMonths(){ document.getElementById("months").innerHTML=MONTHS.map(m=>{const c=(m===current?"active ":"")+(FACT.includes(m)?"fact":"");return `<div class="mo ${c}" onclick="current='${m}';renderMonths()">${m}</div>`;}).join(""); }
+renderMonths(); render();
+</script>
+</body>
+</html>
